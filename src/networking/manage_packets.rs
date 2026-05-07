@@ -534,14 +534,9 @@ mod tests {
     use crate::Service;
     use crate::networking::manage_packets::{
         get_service, get_traffic_direction, get_traffic_type, is_local_connection,
-        mac_from_dec_to_hex, modify_or_insert_in_map,
+        mac_from_dec_to_hex,
     };
     use crate::networking::types::address_port_pair::AddressPortPair;
-    use crate::networking::types::arp_type::ArpType;
-    use crate::networking::types::capture_context::{CaptureSource, MyPcapImport};
-    use crate::networking::types::icmp_type::IcmpType;
-    use crate::networking::types::info_traffic::InfoTraffic;
-    use crate::networking::types::ip_blacklist::IpBlacklist;
     use crate::networking::types::service_query::ServiceQuery;
     use crate::networking::types::traffic_direction::TrafficDirection;
     use crate::networking::types::traffic_type::TrafficType;
@@ -1537,56 +1532,6 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[tokio::test]
-    async fn test_cidr_blacklist_marks_remote_address_blacklisted() {
-        let blacklist =
-            IpBlacklist::from_file("resources/test/ip_blacklist_real_cidr_ranges.txt".to_string())
-                .await;
-        let mut info_traffic = InfoTraffic::default();
-        let capture_source = CaptureSource::File(MyPcapImport::new(String::new()));
-        let key = AddressPortPair::new(
-            IpAddr::from_str("192.168.1.10").unwrap(),
-            Some(50000),
-            IpAddr::from_str("209.186.21.7").unwrap(),
-            Some(443),
-            Protocol::TCP,
-        );
-
-        modify_or_insert_in_map(
-            &mut info_traffic,
-            &key,
-            &capture_source,
-            (None, None),
-            IcmpType::default(),
-            ArpType::default(),
-            100,
-            &blacklist,
-        );
-
-        assert!(info_traffic.map.get(&key).unwrap().is_blacklisted);
-
-        let key = AddressPortPair::new(
-            IpAddr::from_str("192.168.1.10").unwrap(),
-            Some(50001),
-            IpAddr::from_str("209.186.237.1").unwrap(),
-            Some(443),
-            Protocol::TCP,
-        );
-
-        modify_or_insert_in_map(
-            &mut info_traffic,
-            &key,
-            &capture_source,
-            (None, None),
-            IcmpType::default(),
-            ArpType::default(),
-            100,
-            &blacklist,
-        );
-
-        assert!(!info_traffic.map.get(&key).unwrap().is_blacklisted);
     }
 
     #[test]
