@@ -3924,6 +3924,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "prefix-trie"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90f561214012d3fc240a1f9c817cc4d57f5310910d066069c1b093f766bb5966"
+dependencies = [
+ "either",
+ "ipnet",
+ "num-traits",
+]
+
+[[package]]
 name = "presser"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5007,6 +5018,7 @@ dependencies = [
  "etherparse",
  "gag",
  "iced",
+ "ipnet",
  "listeners",
  "maxminddb",
  "pcap",
@@ -5016,6 +5028,7 @@ dependencies = [
  "picon",
  "plotters",
  "plotters-iced2",
+ "prefix-trie",
  "reqwest",
  "rfd",
  "rodio",

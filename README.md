@@ -195,4 +195,3 @@ Follow the <a href="https://sniffnet.net/news"><b>news</b></a> and Sniffnet soci
     </td>
   </tr>
 </table>
-

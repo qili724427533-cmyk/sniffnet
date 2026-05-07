@@ -1,133 +1,134 @@
-use crate::networking::types::ip_collection::IpCollection;
+use ipnet::IpNet;
 use std::net::IpAddr;
 
 pub struct Bogon {
-    pub range: IpCollection,
+    pub ranges: Vec<IpNet>,
     pub description: &'static str,
 }
 
 // IPv4 bogons
 
 static THIS_NETWORK: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("0.0.0.0-0.255.255.255").unwrap(),
+    ranges: vec!["0.0.0.0/8".parse().unwrap()],
     description: "\"this\" network",
 });
 
 static PRIVATE_USE: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new(
-        "10.0.0.0-10.255.255.255, 172.16.0.0-172.31.255.255, 192.168.0.0-192.168.255.255",
-    )
-    .unwrap(),
+    ranges: vec![
+        "10.0.0.0/8".parse().unwrap(),
+        "172.16.0.0/12".parse().unwrap(),
+        "192.168.0.0/16".parse().unwrap(),
+    ],
     description: "private-use",
 });
 
 static CARRIER_GRADE: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("100.64.0.0-100.127.255.255").unwrap(),
+    ranges: vec!["100.64.0.0/10".parse().unwrap()],
     description: "carrier-grade NAT",
 });
 
 static LOOPBACK: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("127.0.0.0-127.255.255.255").unwrap(),
+    ranges: vec!["127.0.0.0/8".parse().unwrap()],
     description: "loopback",
 });
 
 static LINK_LOCAL: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("169.254.0.0-169.254.255.255").unwrap(),
+    ranges: vec!["169.254.0.0/16".parse().unwrap()],
     description: "link local",
 });
 
 static IETF_PROTOCOL: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("192.0.0.0-192.0.0.255").unwrap(),
+    ranges: vec!["192.0.0.0/24".parse().unwrap()],
     description: "IETF protocol assignments",
 });
 
 static TEST_NET_1: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("192.0.2.0-192.0.2.255").unwrap(),
+    ranges: vec!["192.0.2.0/24".parse().unwrap()],
     description: "TEST-NET-1",
 });
 
 static NETWORK_INTERCONNECT: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("198.18.0.0-198.19.255.255").unwrap(),
+    ranges: vec!["198.18.0.0/15".parse().unwrap()],
     description: "network interconnect device benchmark testing",
 });
 
 static TEST_NET_2: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("198.51.100.0-198.51.100.255").unwrap(),
+    ranges: vec!["198.51.100.0/24".parse().unwrap()],
     description: "TEST-NET-2",
 });
 
 static TEST_NET_3: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("203.0.113.0-203.0.113.255").unwrap(),
+    ranges: vec!["203.0.113.0/24".parse().unwrap()],
     description: "TEST-NET-3",
 });
 
 static MULTICAST: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("224.0.0.0-239.255.255.255").unwrap(),
+    ranges: vec!["224.0.0.0/4".parse().unwrap()],
     description: "multicast",
 });
 
 static FUTURE_USE: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("240.0.0.0-255.255.255.255").unwrap(),
+    ranges: vec!["240.0.0.0/4".parse().unwrap()],
     description: "future use",
 });
 
 // IPv6 bogons
 
 static NODE_SCOPE_UNSPECIFIED: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("::").unwrap(),
+    ranges: vec!["::/128".parse().unwrap()],
     description: "node-scope unicast unspecified",
 });
 
 static NODE_SCOPE_LOOPBACK: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("::1").unwrap(),
+    ranges: vec!["::1/128".parse().unwrap()],
     description: "node-scope unicast loopback",
 });
 
 static IPV4_MAPPED: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("::ffff:0.0.0.0-::ffff:255.255.255.255").unwrap(),
+    ranges: vec!["::ffff:0.0.0.0/96".parse().unwrap()],
     description: "IPv4-mapped",
 });
 
 static IPV4_COMPATIBLE: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("::-::255.255.255.255").unwrap(),
+    ranges: vec!["::/96".parse().unwrap()],
     description: "IPv4-compatible",
 });
 
 static REMOTELY_TRIGGERED: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("100::-100::ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["100::/64".parse().unwrap()],
     description: "remotely triggered black hole",
 });
 
 static ORCHID: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("2001:10::-2001:1f:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["2001:10::/28".parse().unwrap()],
     description: "ORCHID",
 });
 
-static DOCUMENTATION_PREFIX: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| {
-    Bogon {
-    range: IpCollection::new("2001:db8::-2001:db8:ffff:ffff:ffff:ffff:ffff:ffff, 3fff::-3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff")
-        .unwrap(),
+static DOCUMENTATION_PREFIX: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
+    ranges: vec![
+        "2001:db8::/32".parse().unwrap(),
+        "3fff::/20".parse().unwrap(),
+    ],
     description: "documentation prefix",
-}
 });
 
 static ULA: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["fc00::/7".parse().unwrap()],
     description: "ULA",
 });
 
 static LINK_LOCAL_UNICAST: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["fe80::/10".parse().unwrap()],
     description: "link-local unicast",
 });
 
 static SITE_LOCAL_UNICAST: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("fec0::-feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["fec0::/10".parse().unwrap()],
     description: "site-local unicast",
 });
 
 static MULTICAST_V6: std::sync::LazyLock<Bogon> = std::sync::LazyLock::new(|| Bogon {
-    range: IpCollection::new("ff00::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    ranges: vec!["ff00::/8".parse().unwrap()],
     description: "multicast v6",
 });
 
@@ -163,7 +164,7 @@ static BOGONS: std::sync::LazyLock<Vec<&'static Bogon>> = std::sync::LazyLock::n
 
 pub fn is_bogon(address: &IpAddr) -> Option<&'static str> {
     for bogon in BOGONS.iter() {
-        if bogon.range.contains(address) {
+        if bogon.ranges.iter().any(|net| net.contains(address)) {
             return Some(bogon.description);
         }
     }
