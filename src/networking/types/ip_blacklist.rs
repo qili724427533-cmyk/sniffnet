@@ -3,11 +3,12 @@ use std::net::IpAddr;
 use std::sync::Arc;
 
 use ipnet::IpNet;
+use prefix_trie::joint::set::JointPrefixSet;
 
 #[derive(Clone, Default, Debug)]
 pub struct IpBlacklist {
     ips: Arc<HashSet<IpAddr>>,
-    networks: Arc<Vec<IpNet>>,
+    networks: Arc<JointPrefixSet<IpNet>>,
     is_loading: bool,
 }
 
@@ -17,7 +18,7 @@ impl IpBlacklist {
             return IpBlacklist::default();
         };
         let mut ips = HashSet::new();
-        let mut networks = Vec::new();
+        let mut networks = JointPrefixSet::new();
         for line in buf.lines() {
             let Some(first) = line.split_whitespace().next() else {
                 continue;
@@ -26,7 +27,7 @@ impl IpBlacklist {
             if let Ok(ip) = first.parse::<IpAddr>() {
                 ips.insert(ip);
             } else if let Ok(network) = first.parse::<IpNet>() {
-                networks.push(network);
+                networks.insert(network);
             }
         }
         IpBlacklist {
@@ -37,7 +38,7 @@ impl IpBlacklist {
     }
 
     pub fn contains(&self, ip: &IpAddr) -> bool {
-        self.ips.contains(ip) || self.networks.iter().any(|network| network.contains(ip))
+        self.ips.contains(ip) || self.networks.get_lpm(&IpNet::from(*ip)).is_some()
     }
 
     pub fn is_invalid(&self) -> bool {
