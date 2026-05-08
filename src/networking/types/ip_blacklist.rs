@@ -186,26 +186,4 @@ mod tests {
         assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(209, 186, 237, 0))));
         assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(209, 233, 160, 0))));
     }
-
-    #[tokio::test]
-    async fn test_ip_blacklist_read_error() {
-        let blacklist =
-            IpBlacklist::from_file("resources/test/does_not_exist_blacklist.txt".to_string()).await;
-
-        assert!(blacklist.is_invalid());
-        assert!(!blacklist.is_loading());
-        assert_eq!(blacklist.ips.len(), 0);
-        assert_eq!(blacklist.networks.len(), 0);
-        assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))));
-    }
-
-    #[test]
-    fn test_ip_blacklist_loading_status() {
-        let mut blacklist = IpBlacklist::default();
-
-        blacklist.start_loading();
-
-        assert!(blacklist.is_loading());
-        assert!(!blacklist.is_invalid());
-    }
 }

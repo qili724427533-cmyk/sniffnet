@@ -373,7 +373,7 @@ fn blacklist_selection<'a>(
 }
 
 fn blacklist_loaded_counts(custom_path: &str, ip_blacklist: &IpBlacklist) -> Option<String> {
-    if custom_path.is_empty() || ip_blacklist.is_loading() || ip_blacklist.is_invalid() {
+    if custom_path.is_empty() || ip_blacklist.is_loading() {
         return None;
     }
 
