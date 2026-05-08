@@ -15,14 +15,18 @@ use crate::gui::styles::text::TextType;
 use crate::gui::types::message::Message;
 use crate::gui::types::settings::Settings;
 use crate::mmdb::types::mmdb_reader::{MmdbReader, MmdbReaders};
-use crate::networking::types::ip_blacklist::IpBlacklist;
+use crate::networking::types::ip_blacklist::{IpBlacklist, IpBlacklistLoadStatus};
 use crate::translations::translations::language_translation;
 use crate::translations::translations_2::country_translation;
 use crate::translations::translations_3::{
     mmdb_files_translation, params_not_editable_translation, zoom_translation,
 };
 use crate::translations::translations_4::share_feedback_translation;
-use crate::translations::translations_5::ip_blacklist_translation;
+use crate::translations::translations_5::{
+    ip_blacklist_file_read_error_translation, ip_blacklist_loaded_translation,
+    ip_blacklist_loading_translation, ip_blacklist_no_valid_entries_translation,
+    ip_blacklist_not_selected_translation, ip_blacklist_translation,
+};
 use crate::utils::formatted_strings::get_path_termination_string;
 use crate::utils::types::file_info::FileInfo;
 use crate::utils::types::icon::Icon;
@@ -331,6 +335,8 @@ fn blacklist_selection<'a>(
     };
 
     let message = Message::LoadIpBlacklist;
+    let status = blacklist_status_text(custom_path, ip_blacklist, language);
+    let status_text_type = blacklist_status_text_type(ip_blacklist);
 
     Column::new()
         .width(Length::Fill)
@@ -363,6 +369,44 @@ fn blacklist_selection<'a>(
                     button_clear_mmdb(message, is_editable)
                 }),
         )
+        .push(Text::new(status).class(status_text_type).size(12))
+}
+
+fn blacklist_status_text(
+    custom_path: &str,
+    ip_blacklist: &IpBlacklist,
+    language: Language,
+) -> String {
+    if custom_path.is_empty() {
+        return ip_blacklist_not_selected_translation(language).to_string();
+    }
+
+    match ip_blacklist.status() {
+        IpBlacklistLoadStatus::NotSelected => {
+            ip_blacklist_not_selected_translation(language).to_string()
+        }
+        IpBlacklistLoadStatus::Loading => ip_blacklist_loading_translation(language).to_string(),
+        IpBlacklistLoadStatus::FileReadError => {
+            ip_blacklist_file_read_error_translation(language).to_string()
+        }
+        IpBlacklistLoadStatus::NoValidEntries { .. } => {
+            ip_blacklist_no_valid_entries_translation(language).to_string()
+        }
+        IpBlacklistLoadStatus::Loaded {
+            ip_count,
+            network_count,
+            ..
+        } => ip_blacklist_loaded_translation(language, *ip_count, *network_count),
+    }
+}
+
+fn blacklist_status_text_type(ip_blacklist: &IpBlacklist) -> TextType {
+    match ip_blacklist.status() {
+        IpBlacklistLoadStatus::FileReadError | IpBlacklistLoadStatus::NoValidEntries { .. } => {
+            TextType::Danger
+        }
+        _ => TextType::Standard,
+    }
 }
 
 fn button_clear_mmdb<'a>(
