@@ -8,7 +8,7 @@ use prefix_trie::joint::set::JointPrefixSet;
 #[derive(Clone, Default, Debug)]
 pub struct IpBlacklist {
     ips: Arc<HashSet<IpAddr>>,
-    networks: Arc<JointPrefixSet<IpNet>>,
+    cidrs: Arc<JointPrefixSet<IpNet>>,
     is_loading: bool,
 }
 
@@ -18,7 +18,7 @@ impl IpBlacklist {
             return IpBlacklist::default();
         };
         let mut ips = HashSet::new();
-        let mut networks = JointPrefixSet::new();
+        let mut cidrs = JointPrefixSet::new();
         for line in buf.lines() {
             let Some(first) = line.split_whitespace().next() else {
                 continue;
@@ -26,27 +26,36 @@ impl IpBlacklist {
 
             if let Ok(ip) = first.parse::<IpAddr>() {
                 ips.insert(ip);
-            } else if let Ok(network) = first.parse::<IpNet>() {
-                networks.insert(network);
+            } else if let Ok(cidr) = first.parse::<IpNet>() {
+                cidrs.insert(cidr);
             }
         }
         IpBlacklist {
             ips: Arc::new(ips),
-            networks: Arc::new(networks),
+            cidrs: Arc::new(cidrs),
             is_loading: false,
         }
     }
 
     pub fn contains(&self, ip: &IpAddr) -> bool {
-        self.ips.contains(ip) || self.networks.get_lpm(&IpNet::from(*ip)).is_some()
+        self.ips.contains(ip) || self.cidrs.get_lpm(&IpNet::from(*ip)).is_some()
     }
 
     pub fn is_invalid(&self) -> bool {
-        self.ips.is_empty() && self.networks.is_empty() && !self.is_loading
+        self.ips.is_empty() && self.cidrs.is_empty() && !self.is_loading
     }
 
     pub fn is_loading(&self) -> bool {
         self.is_loading
+    }
+
+    pub fn imported_items_info(&self) -> Option<String> {
+        match (self.ips.len(), self.cidrs.len()) {
+            (0, 0) => None,
+            (ips, 0) => Some(format!("(IPs: {ips})")),
+            (0, cidrs) => Some(format!("(CIDRs: {cidrs})")),
+            (ips, cidrs) => Some(format!("(IPs: {ips}, CIDRs: {cidrs})")),
+        }
     }
 
     pub fn start_loading(&mut self) {
@@ -67,7 +76,11 @@ mod tests {
         assert!(!blacklist.is_invalid());
         assert!(!blacklist.is_loading());
         assert_eq!(blacklist.ips.len(), 4);
-        assert_eq!(blacklist.networks.len(), 0);
+        assert_eq!(blacklist.cidrs.len(), 0);
+        assert_eq!(
+            blacklist.imported_items_info(),
+            Some("(IPs: 4)".to_string())
+        );
 
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))));
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(1, 2, 3, 255))));
@@ -88,7 +101,8 @@ mod tests {
         assert!(blacklist.is_invalid());
         assert!(!blacklist.is_loading());
         assert_eq!(blacklist.ips.len(), 0);
-        assert_eq!(blacklist.networks.len(), 0);
+        assert_eq!(blacklist.cidrs.len(), 0);
+        assert_eq!(blacklist.imported_items_info(), None);
 
         assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))));
         assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))));
@@ -105,7 +119,11 @@ mod tests {
         assert!(!blacklist.is_invalid());
         assert!(!blacklist.is_loading());
         assert_eq!(blacklist.ips.len(), 2);
-        assert_eq!(blacklist.networks.len(), 4);
+        assert_eq!(blacklist.cidrs.len(), 4);
+        assert_eq!(
+            blacklist.imported_items_info(),
+            Some("(IPs: 2, CIDRs: 4)".to_string())
+        );
 
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))));
         assert!(blacklist.contains(&"2001:db8::1".parse::<IpAddr>().unwrap()));
@@ -136,7 +154,11 @@ mod tests {
         assert!(!blacklist.is_invalid());
         assert!(!blacklist.is_loading());
         assert_eq!(blacklist.ips.len(), 0);
-        assert_eq!(blacklist.networks.len(), 1);
+        assert_eq!(blacklist.cidrs.len(), 1);
+        assert_eq!(
+            blacklist.imported_items_info(),
+            Some("(CIDRs: 1)".to_string())
+        );
 
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(1, 2, 3, 1))));
         assert!(!blacklist.contains(&IpAddr::V4(Ipv4Addr::new(1, 2, 4, 1))));
@@ -150,7 +172,11 @@ mod tests {
 
         assert!(!blacklist.is_invalid());
         assert_eq!(blacklist.ips.len(), 0);
-        assert_eq!(blacklist.networks.len(), 6);
+        assert_eq!(blacklist.cidrs.len(), 6);
+        assert_eq!(
+            blacklist.imported_items_info(),
+            Some("(CIDRs: 6)".to_string())
+        );
 
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(209, 186, 20, 0))));
         assert!(blacklist.contains(&IpAddr::V4(Ipv4Addr::new(209, 186, 23, 255))));

@@ -10,7 +10,7 @@ use crate::gui::pages::types::settings_page::SettingsPage;
 use crate::gui::styles::button::ButtonType;
 use crate::gui::styles::container::ContainerType;
 use crate::gui::styles::rule::RuleType;
-use crate::gui::styles::style_constants::{FONT_SIZE_SUBTITLE, TOOLTIP_DELAY};
+use crate::gui::styles::style_constants::{FONT_SIZE_FOOTER, FONT_SIZE_SUBTITLE, TOOLTIP_DELAY};
 use crate::gui::styles::text::TextType;
 use crate::gui::types::message::Message;
 use crate::gui::types::settings::Settings;
@@ -331,7 +331,6 @@ fn blacklist_selection<'a>(
     };
 
     let message = Message::LoadIpBlacklist;
-
     Column::new()
         .width(Length::Fill)
         .spacing(5)
@@ -362,6 +361,11 @@ fn blacklist_selection<'a>(
                 } else {
                     button_clear_mmdb(message, is_editable)
                 }),
+        )
+        .push(
+            ip_blacklist
+                .imported_items_info()
+                .map(|info| Text::new(info).size(FONT_SIZE_FOOTER)),
         )
 }
 
