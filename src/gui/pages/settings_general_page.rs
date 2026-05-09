@@ -10,7 +10,7 @@ use crate::gui::pages::types::settings_page::SettingsPage;
 use crate::gui::styles::button::ButtonType;
 use crate::gui::styles::container::ContainerType;
 use crate::gui::styles::rule::RuleType;
-use crate::gui::styles::style_constants::{FONT_SIZE_SUBTITLE, TOOLTIP_DELAY};
+use crate::gui::styles::style_constants::{FONT_SIZE_FOOTER, FONT_SIZE_SUBTITLE, TOOLTIP_DELAY};
 use crate::gui::styles::text::TextType;
 use crate::gui::types::message::Message;
 use crate::gui::types::settings::Settings;
@@ -331,9 +331,7 @@ fn blacklist_selection<'a>(
     };
 
     let message = Message::LoadIpBlacklist;
-    let loaded_counts = blacklist_loaded_counts(custom_path, ip_blacklist);
-
-    let mut column = Column::new()
+    Column::new()
         .width(Length::Fill)
         .spacing(5)
         .align_x(Alignment::Center)
@@ -363,26 +361,12 @@ fn blacklist_selection<'a>(
                 } else {
                     button_clear_mmdb(message, is_editable)
                 }),
-        );
-
-    if let Some(loaded_counts) = loaded_counts {
-        column = column.push(Text::new(loaded_counts).class(TextType::Standard).size(12));
-    }
-
-    column
-}
-
-fn blacklist_loaded_counts(custom_path: &str, ip_blacklist: &IpBlacklist) -> Option<String> {
-    if custom_path.is_empty() || ip_blacklist.is_loading() {
-        return None;
-    }
-
-    match (ip_blacklist.ip_count(), ip_blacklist.network_count()) {
-        (0, 0) => None,
-        (ip_count, 0) => Some(format!("(IPs: {ip_count})")),
-        (0, network_count) => Some(format!("(CIDRs: {network_count})")),
-        (ip_count, network_count) => Some(format!("(IPs: {ip_count}, CIDRs: {network_count})")),
-    }
+        )
+        .push(
+            ip_blacklist
+                .imported_items_info()
+                .map(|info| Text::new(info).size(FONT_SIZE_FOOTER)),
+        )
 }
 
 fn button_clear_mmdb<'a>(
